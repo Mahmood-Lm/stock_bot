@@ -1,0 +1,5 @@
+bot_token = "1742274553:AAHI9E0mSmHSmgVdJTnQpIkRXjq1rqwvKVE"
+bot_username = "Org_Info_Bot"
+URL = "https://org-info.herokuapp.com/"
+FMP_key = "289f37a97c50c1fec5ce78135c28a3b9"
+# Marketaux_Key = "ctS03kiICmqA6ybW4NyQx01xsmzaStNr1WE2urYa"
