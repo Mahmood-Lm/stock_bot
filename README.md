@@ -1,2 +1,2 @@
 # stock_bot
-A Telegram chat bot for getting new about stock market
+A Telegram chat bot for getting news about the US stock market
