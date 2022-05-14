@@ -49,6 +49,13 @@ def stockHistory(symbol):
     history = stock.history("2y")
     return history
 
+
+def stockNews(symbol):
+    stock = yf.Ticker(symbol.upper())
+    news = stock.news
+    return news
+
+
 # def get_article(symbol):
 #     """
 #     Receive the content of ``url``, parse it as JSON and return the object.

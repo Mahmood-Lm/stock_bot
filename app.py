@@ -1,12 +1,8 @@
-# from calendar import c
-# from cmath import inf
-# from email import message
-# from turtle import st
-from socket import timeout
 from flask import Flask, request
+from matplotlib.cbook import pts_to_midstep
 from matplotlib.style import context
 import telegram
-from mastermind import get_jsonparsed_data, get_related_companies, stockInfo, stockHistory
+from mastermind import get_jsonparsed_data, get_related_companies, stockInfo, stockHistory, stockNews
 from credetials import bot_token, bot_username, URL
 from gtts import gTTS
 import os
@@ -30,8 +26,11 @@ app = Flask(__name__)
 @app.route('/{}'.format(TOKEN), methods=['POST'])
 def respond():
     update = telegram.Update.de_json(request.get_json(force=True), bot)
+    global rc_keyboard
+    global news
 
-    try:
+    if update.callback_query != None:
+
         chat_id = update.callback_query.message.chat_id
         message_id = update.callback_query.message.message_id
         query = update.callback_query.data
@@ -45,17 +44,17 @@ def respond():
             # bot.sendMessage(chat_id=chat_id, text=text)
 
             history = stockHistory(query[2:])
-            fig = mpf.plot(history, type="candle", style="yahoo", volume=True, mav=(20, 50, 100), savefig="Test2.png")
-            with open("Test2.png", "rb") as chart:
+            fig = mpf.plot(history, type="candle", style="yahoo", volume=True, mav=(20, 50, 100), savefig="chart.png")
+            with open("chart.png", "rb") as chart:
                 bot.send_photo(photo=chart, caption=text, chat_id=chat_id, parse_mode="HTML")
-            os.remove("Test2.png")
+            os.remove("chart.png")
             return 'OK'
 
         elif str(query)[0:2] == "V-":
             
             bot.send_chat_action(chat_id=chat_id, action=telegram.ChatAction.RECORD_AUDIO)
-            info = stockInfo(query[2:])
-            text = f'{info.get("shortName")} is a company listed on {info.get("exchange")} currently worth {info.get("currentPrice")} dollars per share. They are part of the {info.get("industry")} industry and {info.get("sector")} sector.'
+            company = stockInfo(query[2:])
+            text = f'{company.get("shortName")} is a company listed on {company.get("exchange")} currently worth {company.get("currentPrice")} dollars per share. They are part of the {company.get("industry")} industry and {company.get("sector")} sector.'
             voice = gTTS(text=text, lang="en", slow=False)
             voice.save("voice.ogg")
             with open("voice.ogg", "rb") as audio:
@@ -67,43 +66,87 @@ def respond():
         # keyboard = [[telegram.InlineKeyboardButton("📈", callback_data="P-{}".format(company[0]["symbol"])), telegram.InlineKeyboardButton("🔊", callback_data="V-{}".format(company[0]["symbol"]))]]
         # keyboard.append(telegram.InlineKeyboardButton("Related Companies", callback_data="RL"))
         elif str(query)[0:3] == "RC-":
-            company = get_jsonparsed_data(query[3:])
-            related_companies = get_related_companies(company[0]["sector"], company[0]["industry"])
+            company = stockInfo(query[3:])
+            related_companies = get_related_companies(company.get("sector"), company.get("industry"))
             keyboard = []
             for rl in related_companies:
-                if str(rl["companyName"]) != str(company[0]["companyName"]) and len(keyboard) < 4 and rl["companyName"] not in keyboard:
+                if str(rl["companyName"]) != str(company.get("shortName")) and len(keyboard) < 4 and rl["companyName"] not in keyboard:
                     keyboard.append([telegram.InlineKeyboardButton("{}".format(rl["companyName"]), callback_data="{}".format(rl["symbol"]))])
-            keyboard.append([telegram.InlineKeyboardButton("🔙", callback_data="b-{}".format(company[0]["symbol"]))])
+            keyboard.append([telegram.InlineKeyboardButton("⬅️", callback_data="B-{}".format(company.get("symbol")))])
+
             keys = telegram.InlineKeyboardMarkup(keyboard)
             bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=keys)
+            rc_keyboard = keyboard #Different back buttons depending on if the user has pressed the button or not to decrease delay
+            rc_keyboard.pop()
+            rc_keyboard.append([telegram.InlineKeyboardButton("⬅️", callback_data="b-{}".format(company.get("symbol")))])
+            print("RC Keyboard 1:", rc_keyboard)
+            print("Keyboard: ", keyboard)
             return 'OK'
 
         
         elif str(query)[0:2] == "b-":
-            company = get_jsonparsed_data(query[2:])
-            # print("Company Name: ",company[0]["companyName"])
-            keyboard = [[telegram.InlineKeyboardButton("📈", callback_data="P-{}".format(company[0]["symbol"])), telegram.InlineKeyboardButton("🔊", callback_data="V-{}".format(company[0]["symbol"]))]]
-            keyboard.append([telegram.InlineKeyboardButton("Related Companies", callback_data="RC-{}".format(company[0]["symbol"]))])
+            company = stockInfo(query[2:])
+            caption = "{} | <a href='{}'>Website</a>\nShare Price : {}$ ~ {}\nIndustry : {}\nSector : {}\n\nMore Info ⤵️".format(company.get("shortName"), company.get("website"), company.get("currentPrice"), company.get("exchange"), company.get("industry"), company.get("sector"))
+            photo = company.get("logo_url")
+            media = telegram.InputMediaPhoto(photo, caption=caption, parse_mode="HTML")
 
+            keyboard = [[telegram.InlineKeyboardButton("📈", callback_data="P-{}".format(query[2:])), telegram.InlineKeyboardButton("🔊", callback_data="V-{}".format(query[2:]))]]
+            keyboard.append([telegram.InlineKeyboardButton("Related Companies", callback_data="RC-{}".format(query[2:]))])
+            keyboard.append([telegram.InlineKeyboardButton("Latest News", callback_data="N-{}".format(query[2:]))])
+
+            keys = telegram.InlineKeyboardMarkup(keyboard)
+            # bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=keys)
+            bot.edit_message_media(chat_id=chat_id, message_id=message_id, media=media, reply_markup=keys)
+            return 'OK'
+
+        
+        elif str(query[0:2]) == "B-":
+            keyboard = [[telegram.InlineKeyboardButton("📈", callback_data="P-{}".format(query[2:])), telegram.InlineKeyboardButton("🔊", callback_data="V-{}".format(query[2:]))]]
+            keyboard.append([telegram.InlineKeyboardButton("Related Companies", callback_data="RC-{}".format(query[2:]))])
+            keyboard.append([telegram.InlineKeyboardButton("Latest News", callback_data="N-{}".format(query[2:]))])
+            keys = telegram.InlineKeyboardMarkup(keyboard)
+            bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=keys)
+            return 'OK'
+
+            
+
+        elif str(query)[0:2] == "N-":
+            news = stockNews(query[2:])
+            keyboard = []
+            for new in news[0:4]:
+                keyboard.append([telegram.InlineKeyboardButton("{}".format(new["publisher"]), url="{}".format(new["link"]))])
+            keyboard.append([telegram.InlineKeyboardButton("⬅️", callback_data="B-{}".format(query[2:])), telegram.InlineKeyboardButton("➡️", callback_data="N2-{}".format(query[2:]))])
             keys = telegram.InlineKeyboardMarkup(keyboard)
             bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=keys)
             return 'OK'
 
         
-        else:
-            company = get_jsonparsed_data(str(query))
-            # related_companies = get_related_companies(company[0]["sector"], company[0]["industry"])
-            keyboard = [[telegram.InlineKeyboardButton("📈", callback_data="P-{}".format(company[0]["symbol"])), telegram.InlineKeyboardButton("🔊", callback_data="V-{}".format(company[0]["symbol"]))]]
-            keyboard.append([telegram.InlineKeyboardButton("Related Companies", callback_data="RC-{}".format(company[0]["symbol"]))])
-
+        elif str(query)[0:3] == "N2-":
+            keyboard = []
+            for new in news[4:]:
+                keyboard.append([telegram.InlineKeyboardButton("{}".format(new["publisher"]), url="{}".format(new["link"]))])
+            keyboard.append([telegram.InlineKeyboardButton("⬅️", callback_data="N-{}".format(query[3:]))])
             keys = telegram.InlineKeyboardMarkup(keyboard)
-
-            caption = "{} | <a href='{}'>Website</a>\nShare Price : {}$ ~ {}\nIndustry : {}\nSector : {}\nCeo : {}\n\nMore Info ⤵️".format(company[0]["companyName"], company[0]["website"], company[0]["price"], company[0]["exchangeShortName"], company[0]["industry"], company[0]["sector"], company[0]["ceo"])
-            photo = company[0]["image"]
-            bot.send_photo(chat_id=chat_id, photo=photo, caption= caption, parse_mode="HTML", reply_markup=keys)
+            bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=keys)
             return 'OK'
-    except Exception as ex:
-        print("EX:", ex)
+        
+        else:
+            company = stockInfo(str(query))
+            # keyboard = [[telegram.InlineKeyboardButton("📈", callback_data="P-{}".format(company.get("symbol"))), telegram.InlineKeyboardButton("🔊", callback_data="V-{}".format(company.get("symbol")))]]
+            # keyboard.append([telegram.InlineKeyboardButton("Related Companies", callback_data="RC-{}".format(company.get("symbol")))])
+            # keyboard.append([telegram.InlineKeyboardButton("Latest News", callback_data="N-{}".format(company.get("symbol")))])
+            # keys = telegram.InlineKeyboardMarkup(keyboard)
+
+            caption = "{} | <a href='{}'>Website</a>\nShare Price : {}$ ~ {}\nIndustry : {}\nSector : {}\n\nMore Info ⤵️".format(company.get("shortName"), company.get("website"), company.get("currentPrice"), company.get("exchange"), company.get("industry"), company.get("sector"))
+            photo = company.get("logo_url")
+            media = telegram.InputMediaPhoto(photo, caption=caption, parse_mode="HTML")
+            # rc_keyboard.append([telegram.InlineKeyboardButton("🔙", callback_data="b-{}".format(company.get("symbol")))])
+            keys = telegram.InlineKeyboardMarkup(rc_keyboard)
+            print("RC key 2:", rc_keyboard)
+            bot.edit_message_media(chat_id=chat_id, message_id=message_id, media=media, reply_markup=keys)
+            # bot.send_photo(chat_id=chat_id, photo=photo, caption= caption, parse_mode="HTML", reply_markup=keys)
+            return 'OK'
+    else:
 
 
         try:
@@ -117,16 +160,12 @@ def respond():
         try:
             text = update.message.text.encode('utf-8').decode()
             if text == "/start":
-                bot.send_chat_action(chat_id=chat_id, action=telegram.ChatAction.TYPING)
+                # bot.send_chat_action(chat_id=chat_id, action=telegram.ChatAction.TYPING)
                 welcome = "Send a stock symbol to get up to date information about it\nFor example : GOOG, MSFT, NKE"
                 bot.sendMessage(chat_id=chat_id, reply_to_message_id=msg_id, text=welcome)
-                # voice = gTTS(text=welcome, lang="en", slow=False)
-                # voice.save("start_voice.ogg")
-                # with open("start_voice.ogg", "rb") as audio:
-                #     bot.send_voice(chat_id=chat_id, voice=audio)
-                # os.remove("start_voice.ogg")
                 return 'Started'
 
+            bot.send_chat_action(chat_id=chat_id, action=telegram.ChatAction.TYPING)
             get_info(text, chat_id, msg_id)
             # news = get_news(text)
 
@@ -141,15 +180,16 @@ def respond():
 
 
 def get_info(text, chat_id, msg_id):
-    company = get_jsonparsed_data(text)
+    company = stockInfo(text.upper())
+    # company = get_jsonparsed_data(text)
     # print("Company Name: ",company[0]["companyName"])
-    keyboard = [[telegram.InlineKeyboardButton("📈", callback_data="P-{}".format(company[0]["symbol"])), telegram.InlineKeyboardButton("🔊", callback_data="V-{}".format(company[0]["symbol"]))]]
-    keyboard.append([telegram.InlineKeyboardButton("Related Companies", callback_data="RC-{}".format(company[0]["symbol"]))])
-
+    keyboard = [[telegram.InlineKeyboardButton("📈", callback_data="P-{}".format(company.get("symbol"))), telegram.InlineKeyboardButton("🔊", callback_data="V-{}".format(company.get("symbol")))]]
+    keyboard.append([telegram.InlineKeyboardButton("Related Companies", callback_data="RC-{}".format(company.get("symbol")))])
+    keyboard.append([telegram.InlineKeyboardButton("Latest News", callback_data="N-{}".format(company.get("symbol")))])
     keys = telegram.InlineKeyboardMarkup(keyboard)
 
-    caption = "{} | <a href='{}'>Website</a>\nShare Price : {}$ ~ {}\nIndustry : {}\nSector : {}\nCeo : {}\n\nMore Info ⤵️".format(company[0]["companyName"], company[0]["website"], company[0]["price"], company[0]["exchangeShortName"], company[0]["industry"], company[0]["sector"], company[0]["ceo"])
-    photo = company[0]["image"]
+    caption = "{} | <a href='{}'>Website</a>\nShare Price : {}$ ~ {}\nIndustry : {}\nSector : {}\n\nMore Info ⤵️".format(company.get("shortName"), company.get("website"), company.get("currentPrice"), company.get("exchange"), company.get("industry"), company.get("sector"))
+    photo = company.get("logo_url")
     bot.send_photo(chat_id=chat_id, photo=photo, caption= caption, reply_to_message_id=msg_id, parse_mode="HTML", reply_markup=keys)
 
 
