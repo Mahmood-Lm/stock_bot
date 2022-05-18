@@ -3,6 +3,10 @@ import urllib.parse
 import json
 from credetials import FMP_key
 import certifi
+import yfinance as yf
+import matplotlib.pyplot as plt
+import pandas as pd
+import mplfinance as mpf
 
 # import http.client, urllib.parse
 
@@ -10,11 +14,9 @@ import certifi
 def get_jsonparsed_data(symbol):
     """
     Receive the content of ``url``, parse it as JSON and return the object.
-
     Parameters
     ----------
     url : str
-
     Returns
     -------
     dict
@@ -31,8 +33,25 @@ def get_related_companies(sector , industry):
     # print("URL: " ,url)  #MONITORING
     response = urlopen(url, cafile=certifi.where())
     data = response.read().decode("utf-8")
-    print("Related Companies: ", json.loads(data))  #MONITORING
+    # print("Related Companies: ", json.loads(data))  #MONITORING
     return json.loads(data)
+
+def stockInfo(symbol):
+    stock = yf.Ticker(symbol)
+    info = stock.info
+    return info
+
+
+def stockHistory(symbol):
+    stock = yf.Ticker(symbol.upper())
+    history = stock.history("2y")
+    return history
+
+
+def stockNews(symbol):
+    stock = yf.Ticker(symbol.upper())
+    news = stock.news
+    return news
 
 
 # def get_article(symbol):
