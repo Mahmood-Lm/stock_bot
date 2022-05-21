@@ -1,69 +1,50 @@
-#!/usr/bin/env python
-# encoding: utf-8
+from urllib.request import urlopen
+import urllib.parse
 import json
-from flask import Flask, request, jsonify
-
-app = Flask(__name__)
-
-
-@app.route('/', methods=['GET'])
-def query_records():
-    name = request.args.get('name')
-    print(name)
-    with open('/tmp/data.txt', 'r') as f:
-        data = f.read()
-        records = json.loads(data)
-        for record in records:
-            if record['name'] == name:
-                return jsonify(record)
-        return jsonify({'error': 'data not found'})
+from config.credetials import FMP_KEY
+import certifi
+import yfinance as yf
+import pandas as pd
 
 
-@app.route('/', methods=['POST'])
-def create_record():
-    record = json.loads(request.data)
-    with open('/tmp/data.txt', 'r') as f:
-        data = f.read()
-    if not data:
-        records = [record]
-    else:
-        records = json.loads(data)
-        records.append(record)
-    with open('/tmp/data.txt', 'w') as f:
-        f.write(json.dumps(records, indent=2))
-    return jsonify(record)
+def get_stock_info(symbol: str) -> pd.DataFrame:
+    """
+        Retrieves information of a stock based on its symbol.
+        Parameters
+        ----------
+        symbol : string containing stock symbol
+        Returns
+        -------
+        a pandas data frame
+    """
+    stock = yf.Ticker(symbol)
+    info = stock.info
+    return info
 
 
-@app.route('/', methods=['PUT'])
-def update_record():
-    record = json.loads(request.data)
-    new_records = []
-    with open('/tmp/data.txt', 'r') as f:
-        data = f.read()
-        records = json.loads(data)
-    for r in records:
-        if r['name'] == record['name']:
-            r['email'] = record['email']
-        new_records.append(r)
-    with open('/tmp/data.txt', 'w') as f:
-        f.write(json.dumps(new_records, indent=2))
-    return jsonify(record)
+def get_stocks_info(symbols):
+    stocks_info = [yf.Ticker(symbol).info for symbol in symbols]
+    return stocks_info
 
 
-@app.route('/', methods=['DELETE'])
-def delete_record():
-    record = json.loads(request.data)
-    new_records = []
-    with open('/tmp/data.txt', 'r') as f:
-        data = f.read()
-        records = json.loads(data)
-        for r in records:
-            if r['name'] == record['name']:
-                continue
-            new_records.append(r)
-    with open('/tmp/data.txt', 'w') as f:
-        f.write(json.dumps(new_records, indent=2))
-    return jsonify(record)
+def get_stock_history(symbol, period):
+    stock = yf.Ticker(symbol.upper())
+    history = stock.history(period)
+    return history
 
 
-app.run(debug=True)
+def get_stock_news(symbol):
+    stock = yf.Ticker(symbol.upper())
+    news = stock.news
+    return news
+
+
+def get_related_companies(sector, industry):
+    url = "https://financialmodelingprep.com/api/v3/stock-screener?sector={}&industry={}&limit=6&apikey={}".format(
+        urllib.parse.quote(sector), urllib.parse.quote(industry), FMP_KEY
+    )
+    # print("URL: " ,url)  #MONITORING
+    response = urlopen(url, cafile=certifi.where())
+    data = response.read().decode("utf-8")
+    # print("Related Companies: ", json.loads(data))  #MONITORING
+    return json.loads(data)

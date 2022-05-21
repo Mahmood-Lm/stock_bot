@@ -1,5 +1,11 @@
-bot_token = "1742274553:AAHI9E0mSmHSmgVdJTnQpIkRXjq1rqwvKVE"
-bot_username = "Org_Info_Bot"
-URL = "https://org-info.herokuapp.com/"
-FMP_key = "289f37a97c50c1fec5ce78135c28a3b9"
-# Marketaux_Key = "ctS03kiICmqA6ybW4NyQx01xsmzaStNr1WE2urYa"
+import decouple
+
+FMP_KEY = decouple.config("FMP_KEY")
+BOT_TOKEN = decouple.config("BOT_TOKEN")
+BOT_USERNAME = decouple.config("BOT_USERNAME")
+SERVER_URL = decouple.config("SERVER_URL")
+DB_HOST = decouple.config("DB_HOST")
+DB_PORT = decouple.config("DB_PORT")
+DB_NAME = decouple.config("DB_NAME")
+DB_USERNAME = decouple.config("DB_USERNAME")
+DB_PASSWORD = decouple.config("DB_PASSWORD")
