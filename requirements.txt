@@ -32,4 +32,4 @@ gTTS==2.2.4
 yfinance==0.1.70
 mplfinance==0.12.8b9
 python-decouple==3.6
-path-16.4.0
+path==16.4.0
