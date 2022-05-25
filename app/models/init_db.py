@@ -1,4 +1,12 @@
+import path
+import sys
 import psycopg2
+# directory reach
+directory = path.Path(__file__).abspath()
+print("directory --> ", directory.parent.parent.parent)
+
+# setting path
+sys.path.append(directory.parent.parent.parent)
 from app.models.utils import get_db_connection
 
 conn = get_db_connection()
