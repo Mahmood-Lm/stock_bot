@@ -34,3 +34,4 @@ mplfinance==0.12.8b9
 python-decouple==3.6
 path==16.2.0
 psycopg2==2.9.3
+apscheduler==3.6.3
