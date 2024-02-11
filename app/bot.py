@@ -576,4 +576,5 @@ def index():
 
 
 if __name__ == "__main__":
+    print("Just CHecking")
     app.run(threaded=True)
