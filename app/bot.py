@@ -1,5 +1,6 @@
 # from curses.panel import bottom_panel
 # from unicodedata import numeric
+print("**************** Omad 1 ***************")
 from flask import Flask, request
 from matplotlib.pyplot import text
 from matplotlib.style import context
@@ -436,6 +437,8 @@ def respond():
             text = update.message.text.encode("utf-8").decode()
 
             if text == "/start":
+                print("**************** Omad 2 ***************")
+
                 # initialize()
                 try:
                     create_chat(chat_id)
@@ -492,6 +495,8 @@ def respond():
             return 'OK'
 
         except Exception as e:
+            print("**************** Omad 3 ***************")
+
 
             print("Exception:", e)
             cpt = "Sorry, We couldn't find what you're looking for"
