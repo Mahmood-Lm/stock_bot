@@ -442,8 +442,8 @@ def respond():
                 # initialize()
                 try:
                     create_chat(chat_id)
-                except Exception:
-                    pass
+                except Exception as e:
+                    print("*** Start failed *** : ", e)
                 first_name = update.message.chat.first_name
                 welcome = f"Hello {first_name},\n\nSend a stock symbol to get up to date information about it\nFor example : GOOG, MSFT, NKE\n\nSend your prefered time in this format to receive daily updates: Time Timezone\ne.g. : 10:50 Europe/Rome\n\nSend /setting command to check your current time setting.\n\nSend /watchlist command to receive your watchlist"
                 bot.sendMessage(
