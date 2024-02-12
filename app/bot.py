@@ -439,7 +439,7 @@ def respond():
             if text == "/start":
                 print("**************** Omad 2 ***************")
 
-                # initialize()
+                initialize()
                 try:
                     create_chat(chat_id)
                 except Exception as e:
