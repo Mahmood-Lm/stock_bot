@@ -21,6 +21,7 @@ def get_stock_info(symbol: str):
     stock = yf.Ticker(symbol)
     print("stock: ", stock)
     info = stock.info
+    print("info: ", info)
     return info
 
 

@@ -1,6 +1,6 @@
 # from curses.panel import bottom_panel
 # from unicodedata import numeric
-print("**************** Omad 1 ***************")
+# print("**************** Omad 1 ***************")
 from flask import Flask, request
 from matplotlib.pyplot import text
 from matplotlib.style import context
@@ -438,8 +438,9 @@ def respond():
 
             if text == "/start":
                 print("**************** Omad 2 ***************")
-
-                initialize()
+                
+                # used to initialize the database. comment after first initialization
+                # initialize()
                 try:
                     create_chat(chat_id)
                 except Exception as e:
