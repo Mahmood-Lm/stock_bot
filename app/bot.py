@@ -511,7 +511,9 @@ def respond():
 
 
 def get_info(text, chat_id):
+    print("** Omad to get_info **")
     company = get_stock_info(text.upper())
+    print("*** Company: ", company)
     if company.get("symbol") not in get_chat_watchlist(chat_id):
         watchlist_button = [telegram.InlineKeyboardButton(
             "Add to Watchlist ⭐", callback_data="W-{}".format(company.get("symbol"))

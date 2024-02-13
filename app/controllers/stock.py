@@ -19,6 +19,7 @@ def get_stock_info(symbol: str):
     a pandas data frame
     """
     stock = yf.Ticker(symbol)
+    print("stock: ", stock)
     info = stock.info
     return info
 
