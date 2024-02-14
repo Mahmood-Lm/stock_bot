@@ -439,14 +439,14 @@ def respond():
             if text == "/start":
                 print("**************** Omad 2 ***************")
                 
-                # used to initialize the database. comment after first initialization
+                # used to initialize the database. comment out after first initialization
                 # initialize()
                 try:
                     create_chat(chat_id)
                 except Exception as e:
                     print("*** Start failed *** : ", e)
                 first_name = update.message.chat.first_name
-                welcome = f"Hello {first_name},\n\nSend a stock symbol to get up to date information about it\nFor example : GOOG, MSFT, NKE\n\nSend your prefered time in this format to receive daily updates: Time Timezone\ne.g. : 10:50 Europe/Rome\n\nSend /setting command to check your current time setting.\n\nSend /watchlist command to receive your watchlist"
+                welcome = f"Hello {first_name} Kooni,\n\nSend a stock symbol to get up to date information about it\nFor example : GOOG, MSFT, NKE\n\nSend your prefered time in this format to receive daily updates: Time Timezone\ne.g. : 10:50 Europe/Rome\n\nSend /setting command to check your current time setting.\n\nSend /watchlist command to receive your watchlist"
                 bot.sendMessage(
                     chat_id=chat_id, reply_to_message_id=msg_id, text=welcome
                 )
