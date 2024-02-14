@@ -559,7 +559,7 @@ def get_info(text, chat_id):
         company.get("industry"),
         company.get("sector"),
     )
-    photo = company.get("logo_url")
+    photo = company.get("logo_url", "https://static.vecteezy.com/system/resources/previews/005/747/906/non_2x/info-icon-template-information-icon-colorful-free-vector.jpg")
     bot.send_photo(
         chat_id=chat_id,
         photo=photo,
